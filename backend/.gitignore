@@ -1,0 +1,18 @@
+# Python virtual environments
+poultry/
+venv/
+.venv/
+env/
+
+# Bytecode & cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration
+.env
+*.db
+*.sqlite3
+*.log
