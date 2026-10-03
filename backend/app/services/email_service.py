@@ -47,14 +47,29 @@ class EmailService:
             part = MIMEText(html_content, "html")
             msg.attach(part)
 
-            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
-            server.ehlo()
-            server.starttls()
+            port = int(settings.SMTP_PORT)
+            if port == 465:
+                # SSL Direct
+                server = smtplib.SMTP_SSL(settings.SMTP_HOST, port, timeout=15)
+                server.ehlo()
+            else:
+                # STARTTLS (usually 587)
+                server = smtplib.SMTP(settings.SMTP_HOST, port, timeout=15)
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+
             server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.sendmail(settings.SMTP_FROM_EMAIL, to_email, msg.as_string())
             server.quit()
             logger.info(f"Email OTP sent successfully to {to_email}")
             return True
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"SMTP Authentication Failed: {e}. For Gmail, make sure to use a 16-character Google App Password (not your account password).")
+            return False
+        except smtplib.SMTPServerDisconnected as e:
+            logger.error(f"SMTP Connection Disconnected: {e}. On AWS EC2, outbound email traffic may be throttled or blocked by default, or credentials/port are rejected.")
+            return False
         except Exception as e:
             logger.error(f"Failed to send email OTP: {e}")
             return False
